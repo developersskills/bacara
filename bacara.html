@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>วิเคราะห์ Baccarat ด้วย AI</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', Arial, sans-serif;
+      margin: 20px;
+      background-color: #f7e7f3;
+      color: #333;
+    }
+    h1 {
+      color: #ff6f91;
+      text-shadow: 1px 1px 2px #ffb3c6;
+      text-align: center;
+    }
+    .main-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .left-panel, .right-panel {
+      background-color: #fff0f5;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      flex: 1;
+    }
+    .left-panel {
+      max-width: 400px;
+    }
+    .right-panel {
+      max-width: 700px;
+      overflow-y: auto;
+      max-height: 80vh;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      border: 2px solid #ffb3c6;
+      border-radius: 10px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+    .buttons {
+      margin: 10px 0;
+      display: flex;
+      justify-content: space-around;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      color: white;
+      transition: background-color 0.3s;
+    }
+    #addBanker { background-color: #ff6f91; }
+    #addBanker:hover { background-color: #ff8fa3; }
+    #addPlayer { background-color: #40c4ff; }
+    #addPlayer:hover { background-color: #4fc3f7; }
+    #addTie { background-color: #a5d6a7; }
+    #addTie:hover { background-color: #b2d8b5; }
+    .result {
+      font-size: 18px;
+      color: #333;
+      padding: 15px;
+      background-color: #e0f7fa;
+      border-radius: 10px;
+    }
+    .highlight {
+      color: #ff6f91;
+      font-weight: bold;
+    }
+    .profit-positive {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .profit-negative {
+      color: #f44336;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<h1>💖 วิเคราะห์ Baccarat ด้วย AI 💖</h1>
+<div class="main-container">
+  <div class="left-panel">
+    <p>กรอกประวัติผลล่าสุด (เช่น B,P,T คั่นด้วยเครื่องหมาย ,) :</p>
+    <input type="text" id="historyInput" placeholder="เช่น B,B,P,B,P,B" oninput="analyzeBaccarat()">
+    <div class="buttons">
+      <p>เพิ่มผลล่าสุด:</p>
+      <button id="addBanker" onclick="addResult('B')">Banker (B)</button>
+      <button id="addPlayer" onclick="addResult('P')">Player (P)</button>
+      <button id="addTie" onclick="addResult('T')">Tie (T)</button>
+    </div>
+    <p>กรอกงบประมาณของคุณ (บาท) :</p>
+    <input type="number" id="budgetInput" placeholder="เช่น 1000" oninput="analyzeBaccarat()">
+    <p>เดิมพันต่ำสุดต่อรอบ (บาท) :</p>
+    <input type="number" id="minBetInput" value="1000" oninput="analyzeBaccarat()">
+    <p>เดิมพันสูงสุดต่อรอบ (บาท) :</p>
+    <input type="number" id="maxBetInput" value="10000" oninput="analyzeBaccarat()">
+    <p>ต้องการแผนการเดิมพันกี่รอบ :</p>
+    <input type="number" id="roundsInput" value="5" oninput="analyzeBaccarat()">
+  </div>
+  <div class="right-panel">
+    <div class="result" id="analysisResult"></div>
+  </div>
+</div>
+
+<script>
+  let history = ["B", "B", "P", "B", "P", "B"]; // ค่าเริ่มต้นจากภาพ
+
+  function addResult(result) {
+    history.push(result);
+    document.getElementById("historyInput").value = history.join(",");
+    analyzeBaccarat();
+  }
+
+  function simulateProbability(history) {
+    let bankerWins = 0, playerWins = 0, tieWins = 0;
+    const simulations = 1000;
+    for (let i = 0; i < simulations; i++) {
+      let currentHistory = [...history];
+      while (currentHistory.length < 10) {
+        const lastResult = currentHistory[currentHistory.length - 1] || "B";
+        let nextResult;
+        if (Math.random() < 0.45) nextResult = "B";
+        else if (Math.random() < 0.45 + 0.4586) nextResult = "P";
+        else nextResult = "T";
+        currentHistory.push(nextResult);
+      }
+      const stats = {
+        banker: currentHistory.filter(r => r === "B").length,
+        player: currentHistory.filter(r => r === "P").length,
+        tie: currentHistory.filter(r => r === "T").length
+      };
+      bankerWins += stats.banker / currentHistory.length;
+      playerWins += stats.player / currentHistory.length;
+      tieWins += stats.tie / currentHistory.length;
+    }
+    return {
+      banker: (bankerWins / simulations * 100).toFixed(2),
+      player: (playerWins / simulations * 100).toFixed(2),
+      tie: (tieWins / simulations * 100).toFixed(2)
+    };
+  }
+
+  function analyzeBaccarat() {
+    const historyInput = document.getElementById("historyInput").value.trim();
+    if (historyInput) {
+      history = historyInput.split(",").map(item => item.trim().toUpperCase());
+    }
+
+    if (history.length > 0 && !history.every(item => ["B", "P", "T"].includes(item))) {
+      document.getElementById("analysisResult").innerHTML = "กรุณากรอกข้อมูลให้ถูกต้อง (B, P, หรือ T เท่านั้น)";
+      return;
+    }
+
+    if (history.length === 0) {
+      history = ["B", "B", "P", "B", "P", "B"];
+      document.getElementById("historyInput").value = history.join(",");
+    }
+
+    const budgetInput = parseFloat(document.getElementById("budgetInput").value) || 0;
+    if (budgetInput <= 0) {
+      document.getElementById("analysisResult").innerHTML = "กรุณากรอกงบประมาณที่มากกว่า 0";
+      return;
+    }
+
+    const minBet = parseFloat(document.getElementById("minBetInput").value) || 1000;
+    const maxBet = parseFloat(document.getElementById("maxBetInput").value) || 10000;
+    if (minBet <= 0 || maxBet <= 0) {
+      document.getElementById("analysisResult").innerHTML = "กรุณากรอกจำนวนเดิมพันต่ำสุดและสูงสุดที่มากกว่า 0";
+      return;
+    }
+    if (minBet > maxBet) {
+      document.getElementById("analysisResult").innerHTML = "เดิมพันต่ำสุดต้องน้อยกว่าหรือเท่ากับเดิมพันสูงสุด";
+      return;
+    }
+    if (minBet > budgetInput) {
+      document.getElementById("analysisResult").innerHTML = "เดิมพันต่ำสุดต้องน้อยกว่าหรือเท่ากับงบประมาณ";
+      return;
+    }
+
+    const rounds = parseInt(document.getElementById("roundsInput").value) || 5;
+    if (rounds <= 0) {
+      document.getElementById("analysisResult").innerHTML = "กรุณากรอกจำนวนรอบที่มากกว่า 0";
+      return;
+    }
+
+    const probabilities = simulateProbability(history);
+    const totalLength = history.length;
+    const bankerWins = history.filter(s => s === "B").length;
+    const playerWins = history.filter(s => s === "P").length;
+    const tieWins = history.filter(s => s === "T").length;
+
+    let streakAnalysis = "";
+    let currentStreak = 1;
+    let maxStreak = 1;
+    let streakType = history[0];
+    for (let i = 1; i < history.length; i++) {
+      if (history[i] === history[i - 1] && history[i] !== "T") {
+        currentStreak++;
+        maxStreak = Math.max(maxStreak, currentStreak);
+        streakType = history[i];
+      } else {
+        currentStreak = 1;
+      }
+    }
+    streakAnalysis = maxStreak > 1 ? `พบ Streak สูงสุด: ${streakType} ซ้ำ ${maxStreak} ครั้ง` : "ไม่พบ Streak";
+
+    let chopCount = 0;
+    for (let i = 1; i < history.length; i++) {
+      if ((history[i] === "B" && history[i - 1] === "P") || (history[i] === "P" && history[i - 1] === "B")) {
+        chopCount++;
+      }
+    }
+    const chopAnalysis = chopCount > 0 ? `พบรูปแบบสลับ (Chops): ${chopCount} ครั้ง` : "ไม่พบรูปแบบสลับ";
+
+    const dragonAnalysis = maxStreak >= 3 ? `พบ Dragon Pattern: ${streakType} ชนะติดต่อกัน ${maxStreak} ครั้ง` : "ไม่พบ Dragon Pattern";
+
+    let pingPongCount = 0;
+    for (let i = 2; i < history.length; i++) {
+      if (history[i - 2] === "B" && history[i - 1] === "P" && history[i] === "B") {
+        pingPongCount++;
+      } else if (history[i - 2] === "P" && history[i - 1] === "B" && history[i] === "P") {
+        pingPongCount++;
+      }
+    }
+    const pingPongAnalysis = pingPongCount > 0 ? `พบ Ping Pong Pattern: ${pingPongCount} ครั้ง` : "ไม่พบ Ping Pong Pattern";
+
+    let bigRoadAnalysis = "Big Road Trend: ";
+    let currentRun = 1;
+    for (let i = 1; i < history.length; i++) {
+      if (history[i] === history[i - 1] && history[i] !== "T") {
+        currentRun++;
+        bigRoadAnalysis += `${history[i]}(x${currentRun}), `;
+      } else {
+        bigRoadAnalysis += `${history[i]}, `;
+        currentRun = 1;
+      }
+    }
+
+    let aiPrediction = "";
+    if (probabilities.banker > probabilities.player && probabilities.banker > probabilities.tie) {
+      aiPrediction = `AI คาดการณ์: Banker มีแนวโน้มสูงสุด (${probabilities.banker}%)`;
+    } else if (probabilities.player > probabilities.banker && probabilities.player > probabilities.tie) {
+      aiPrediction = `AI คาดการณ์: Player มีแนวโน้มสูงสุด (${probabilities.player}%)`;
+    } else {
+      aiPrediction = `AI คาดการณ์: ความน่าจะเป็นใกล้เคียง (${probabilities.banker}% Banker, ${probabilities.player}% Player)`;
+    }
+
+    let recommendedSides = [];
+    let currentSide = (chopCount > maxStreak && pingPongCount > 0) ? "P" : (probabilities.banker > probabilities.player ? "B" : "P");
+    for (let i = 0; i < rounds; i++) {
+      recommendedSides.push(currentSide);
+      currentSide = currentSide === "B" ? "P" : "B";
+    }
+
+    let budget = budgetInput;
+    let currentBet = minBet;
+    let bettingPlan = "";
+    let remainingBudgetWin = budget;
+    let remainingBudgetLose = budget;
+    let profitWin = 0;
+    let profitLose = 0;
+
+    for (let round = 0; round < rounds; round++) {
+      if (remainingBudgetWin <= 0 || remainingBudgetLose <= 0) {
+        bettingPlan += `<strong>รอบที่ ${round + 1}:</strong> งบหมดแล้ว! ไม่สามารถลงได้<br>`;
+        break;
+      }
+
+      currentBet = Math.min(currentBet, maxBet);
+      currentBet = Math.max(currentBet, minBet);
+
+      if (currentBet > remainingBudgetWin || currentBet > remainingBudgetLose) {
+        bettingPlan += `<strong>รอบที่ ${round + 1}:</strong> เงินเดิมพัน (${currentBet} บาท) เกินงบที่เหลือ ไม่สามารถลงได้<br>`;
+        break;
+      }
+
+      const recommendedSide = recommendedSides[round];
+      const nextSideWin = recommendedSides[round + 1] || recommendedSide;
+      const nextSideLose = recommendedSide === "B" ? "P" : "B";
+
+      const winProfit = currentBet * (recommendedSide === "B" ? 0.95 : 1);
+      const newBudgetWin = remainingBudgetWin + winProfit;
+      const newBudgetLose = remainingBudgetLose - currentBet;
+
+      profitWin += winProfit;
+      profitLose -= currentBet;
+
+      const profitWinDisplay = profitWin >= 0 ? `<span class="profit-positive">+${profitWin.toFixed(2)}</span>` : `<span class="profit-negative">${profitWin.toFixed(2)}</span>`;
+      const profitLoseDisplay = profitLose >= 0 ? `<span class="profit-positive">+${profitLose.toFixed(2)}</span>` : `<span class="profit-negative">${profitLose.toFixed(2)}</span>`;
+
+      bettingPlan += `<strong>รอบที่ ${round + 1}:</strong> ลง <span class="highlight">${recommendedSide}</span> จำนวน ${currentBet} บาท<br>`;
+      bettingPlan += `- หากชนะ: งบเหลือ ${newBudgetWin.toFixed(2)} บาท (กำไร/ขาดทุนสะสม: ${profitWinDisplay} บาท), รอบถัดไปลง <span class="highlight">${nextSideWin}</span> จำนวน ${minBet} บาท<br>`;
+      bettingPlan += `- หากแพ้: งบเหลือ ${newBudgetLose.toFixed(2)} บาท (กำไร/ขาดทุนสะสม: ${profitLoseDisplay} บาท), รอบถัดไปลง <span class="highlight">${nextSideLose}</span> จำนวน ${Math.min(currentBet * 2, maxBet)} บาท<br>`;
+
+      remainingBudgetWin = newBudgetWin;
+      remainingBudgetLose = newBudgetLose;
+
+      currentBet = (probabilities[recommendedSide.toLowerCase()] > 50) ? minBet : Math.min(currentBet * 2, maxBet);
+    }
+
+    const finalProfitWinDisplay = profitWin >= 0 ? `<span class="profit-positive">+${profitWin.toFixed(2)}</span>` : `<span class="profit-negative">${profitWin.toFixed(2)}</span>`;
+    const finalProfitLoseDisplay = profitLose >= 0 ? `<span class="profit-positive">+${profitLose.toFixed(2)}</span>` : `<span class="profit-negative">${profitLose.toFixed(2)}</span>`;
+    const profitSummary = `<strong>สรุปกำไร/ขาดทุนหลัง ${rounds} รอบ:</strong><br>
+        - หากชนะทุกครั้ง: ${finalProfitWinDisplay} บาท (งบสุดท้าย: ${remainingBudgetWin.toFixed(2)} บาท)<br>
+        - หากแพ้ทุกครั้ง: ${finalProfitLoseDisplay} บาท (งบสุดท้าย: ${remainingBudgetLose.toFixed(2)} บาท)<br>`;
+
+    let recommendation = "";
+    if (chopCount > maxStreak && pingPongCount > 0) {
+      recommendation = "จากรูปแบบสลับ (Chops/Ping Pong) ควรลง <span class='highlight'>Player (P)</span> รอบต่อไป";
+    } else if (probabilities.banker > 50) {
+      recommendation = "จาก AI ควรลง <span class='highlight'>Banker (B)</span> รอบต่อไป";
+    } else {
+      recommendation = "จาก AI แนะนำลง <span class='highlight'>Player (P)</span> ตามรูปแบบสลับ";
+    }
+
+    document.getElementById("analysisResult").innerHTML = `
+        <strong>ผลล่าสุด:</strong> ${history.join(", ")}<br><br>
+        <strong>สถิติ (${totalLength} เกม):</strong><br>
+        - Banker ชนะ: ${bankerWins} ครั้ง (${(bankerWins / totalLength * 100).toFixed(2)}%)<br>
+        - Player ชนะ: ${playerWins} ครั้ง (${(playerWins / totalLength * 100).toFixed(2)}%)<br>
+        - Tie: ${tieWins} ครั้ง (${(tieWins / totalLength * 100).toFixed(2)}%)<br><br>
+        <strong>ความน่าจะเป็นจาก AI (จำลอง 1000 ครั้ง):</strong><br>
+        - Banker: ${probabilities.banker}%<br>
+        - Player: ${probabilities.player}%<br>
+        - Tie: ${probabilities.tie}%<br><br>
+        <strong>วิเคราะห์รูปแบบ:</strong><br>
+        - ${streakAnalysis}<br>
+        - ${chopAnalysis}<br>
+        - ${dragonAnalysis}<br>
+        - ${pingPongAnalysis}<br>
+        - ${bigRoadAnalysis}<br><br>
+        <strong>คาดการณ์รอบถัดไป:</strong><br>
+        ${aiPrediction}<br><br>
+        <strong>สำหรับ FiveM:</strong><br>
+        ${(parseFloat(probabilities.banker) > 60 || parseFloat(probabilities.player) > 60) ? `ความน่าจะเป็นฝั่ง ${parseFloat(probabilities.banker) > parseFloat(probabilities.player) ? "Banker" : "Player"} สูงผิดปกติ (${Math.max(probabilities.banker, probabilities.player)}%) อาจบ่งบอกถึง RNG เอียง` : `ความน่าจะเป็นสมดุล (${probabilities.banker}% Banker, ${probabilities.player}% Player) ระวัง House Edge`}<br><br>
+        <strong>สรุป: ควรลงอะไรรอบต่อไป?</strong><br>
+        ${recommendation}<br><br>
+        <strong>💰 แผนการเดิมพัน ${rounds} รอบ (งบเริ่มต้น: ${budget} บาท, เดิมพันต่ำสุด: ${minBet}, สูงสุด: ${maxBet}):</strong><br>
+        ${bettingPlan}<br>
+        ${profitSummary}
+      `;
+  }
+
+  window.onload = analyzeBaccarat;
+</script>
+</body>
+</html>
